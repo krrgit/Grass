@@ -1,0 +1,49 @@
+#pragma kernel InitializeGrass
+
+#include "Simplex.compute"
+
+struct GrassData {
+    float4 position;
+    float2 uv;
+};
+
+RWStructuredBuffer<GrassData> _GrassDataBuffer;
+
+int _Width, _Length, _Density;
+float _XCenter;
+float _YCenter;
+float _ZCenter;
+
+[numthreads(8,8,1)]
+void InitializeGrass(uint3 id : SV_DispatchThreadID) {
+    if (id.x < uint(_Width) && id.y < uint(_Length)) {
+        GrassData grass;
+
+        float4 pos = 0.0f;
+        pos.x = (id.x - float(_Width) * 0.5) * (1.0f / float(_Density));
+        pos.z = (id.y - float(_Length) * 0.5) * (1.0f / float(_Density));
+
+        pos.x += snoise(float3(pos.xz, 0.0f) * 3.0f) * 0.05f;
+        pos.z += snoise(float3(pos.xz, 0.0f) * 4.0f) * 0.05f;
+
+        pos.y = 0.5f + _YCenter;
+        pos.x += _XCenter;
+        pos.z += _ZCenter;
+
+        float noise = abs(snoise(float3(pos.xz, 0.0f) * 0.2f));
+        pos.w = lerp(0.4f, 1.0f, noise);
+        // pos.w = max(1.0f, abs(snoise(float3(pos.xz, 0.0f) * 0.2f) * 2.5f)) * _HeightScale;
+
+        float2 uv = pos.xz;
+        uv = (id.xy) * (1.0f / float(_Density));
+        uv.x /= float(_Width) * (1.0f / float(_Density));
+        uv.y /= float(_Length) * (1.0f / float(_Density));
+        uv.y = 1 - uv.y;
+        uv.x = 1 - uv.x;
+
+        grass.position = pos;
+        grass.uv = uv;
+
+        _GrassDataBuffer[id.x + id.y * _Width] = grass;
+    }
+}
