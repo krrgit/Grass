@@ -6,15 +6,18 @@ public class ModelGrass : MonoBehaviour {
     public int width = 10;
     public int length = 10;
     public int density = 1;
-    public Material grassMaterial;
-    public Mesh grassMesh;
+    public Material material;
+    public Mesh mesh;
     public bool isInstanced = true;
 
     public bool updateGrass;
 
     [Header("Wind")]
+    [Range(0,10)]
     public float windSpeed = 1.0f;
+    [Range(0,5)]
     public float frequency = 1.0f;
+    [Range(0,1)]
     public float windStrength = 1.0f;
 
     private ComputeShader initializeGrassShader, generateWindShader;
@@ -39,11 +42,11 @@ public class ModelGrass : MonoBehaviour {
 
         if (isInstanced)
         {
-            matInstance = new Material(grassMaterial);
+            matInstance = new Material(material);
         }
         else
         {
-            matInstance = grassMaterial;
+            matInstance = material;
         }
         
         wind = new RenderTexture(256, 256, 0, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear);
@@ -66,10 +69,10 @@ public class ModelGrass : MonoBehaviour {
         uint[] args = new uint[5] { 0, 0, 0, 0, 0 };
         // Arguments for drawing mesh.
         // 0 == number of triangle indices, 1 == population, others are only relevant if drawing submeshes.
-        args[0] = (uint)grassMesh.GetIndexCount(0);
+        args[0] = (uint)mesh.GetIndexCount(0);
         args[1] = (uint)grassDataBuffer.count;
-        args[2] = (uint)grassMesh.GetIndexStart(0);
-        args[3] = (uint)grassMesh.GetBaseVertex(0);
+        args[2] = (uint)mesh.GetIndexStart(0);
+        args[3] = (uint)mesh.GetBaseVertex(0);
         argsBuffer.SetData(args);
         
         GenerateWind();
@@ -92,7 +95,7 @@ public class ModelGrass : MonoBehaviour {
         matInstance.SetBuffer("positionBuffer", grassDataBuffer);
         matInstance.SetTexture("_WindTex", wind);
 
-        Graphics.DrawMeshInstancedIndirect(grassMesh, 0, matInstance, new Bounds(Vector3.zero, new Vector3(-500.0f, 200.0f, 500.0f)), argsBuffer);
+        Graphics.DrawMeshInstancedIndirect(mesh, 0, matInstance, new Bounds(Vector3.zero, new Vector3(-500.0f, 200.0f, 500.0f)), argsBuffer);
 
         if (updateGrass) {
             updateGrassBuffer();

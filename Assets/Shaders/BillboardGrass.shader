@@ -1,4 +1,4 @@
-Shader "Unlit/BillboardGrass" {
+Shader "Custom/BillboardGrass" {
     Properties {
         _MainTex ("Texture", 2D) = "white" {}
         _WindStrength ("Wind Strength", Range(0.5, 50.0)) = 1
