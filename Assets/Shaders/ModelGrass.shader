@@ -66,19 +66,6 @@ Shader "Custom/ModelGrass" {
                 return float4(mul(m, vertex.xz), vertex.yw).xzyw;
             }
 
-            bool VertexIsBelowClipPlane(float3 p, int planeIndex, float bias) {
-                float4 plane = unity_CameraWorldClipPlanes[planeIndex];
-
-                return dot(float4(p, 1), plane) < bias;
-            }   
-
-            bool cullVertex(float3 p, float bias) {
-                return VertexIsBelowClipPlane(p, 0, bias) ||
-                        VertexIsBelowClipPlane(p, 1, bias) ||
-                        VertexIsBelowClipPlane(p, 2, bias) ||
-                        VertexIsBelowClipPlane(p, 3, -1.0f);
-            }
-
             v2f vert (VertexData v, uint instanceID : SV_INSTANCEID) {
                 v2f o;
                 
@@ -119,7 +106,7 @@ Shader "Custom/ModelGrass" {
                 float3 lightDir = _WorldSpaceLightPos0.xyz;
                 float ndotl = DotClamped(lightDir, normalize(float3(0, 1, 0)));
                 float4 ao = lerp(_AOColor, 1.0f, i.uv.y);
-                float4 tip = lerp(0.0f, _TipColor, i.saturationLevel);
+                float4 tip = lerp(0.0f, _TipColor, i.saturationLevel * min(1.0, _HeightVariance));
 
                 return((col + tip) * ndotl * ao);// + ((col + tip) * UNITY_LIGHTMODEL_AMBIENT * (1.0 - ndotl) * ao * 0.95f));
             }
