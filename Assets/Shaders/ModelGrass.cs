@@ -20,7 +20,7 @@ public class ModelGrass : MonoBehaviour {
     public float windStrength = 1.0f;
 
     private ComputeShader initializeGrassShader, generateWindShader, cullGrassShader;
-    private ComputeBuffer grassDataBuffer, grassVoteBuffer;
+    private ComputeBuffer grassDataBuffer, grassVoteBuffer, grassScanBuffer;
     private ComputeBuffer argsBuffer;
 
     private RenderTexture wind;
@@ -40,7 +40,8 @@ public class ModelGrass : MonoBehaviour {
         
         grassDataBuffer = new ComputeBuffer(resolution * resolution * density * density, 4 * 6);
         grassVoteBuffer = new ComputeBuffer(resolution * resolution * density * density, 4);
-        
+        grassScanBuffer = new ComputeBuffer(resolution * resolution * density * density, 4);
+
         argsBuffer = new ComputeBuffer(1, 5 * sizeof(uint), ComputeBufferType.IndirectArguments);
 
         if (isInstanced) matInstance = new Material(material);
@@ -72,6 +73,10 @@ public class ModelGrass : MonoBehaviour {
         cullGrassShader.SetBuffer(0, "_GrassDataBuffer", grassDataBuffer);
         cullGrassShader.SetBuffer(0, "_GrassVoteBuffer", grassVoteBuffer);
         cullGrassShader.Dispatch(0, Mathf.CeilToInt((resolution * resolution * density * density) / 128.0f), 1, 1);
+        
+        cullGrassShader.SetBuffer(1, "_GrassVoteBuffer", grassVoteBuffer);
+        cullGrassShader.SetBuffer(1, "_GrassScanBuffer", grassScanBuffer);
+        cullGrassShader.Dispatch(1, Mathf.CeilToInt((resolution * resolution * density * density) / 128.0f), 1, 1);
         
         uint[] args = new uint[5] { 0, 0, 0, 0, 0 };
         // Arguments for drawing mesh.
@@ -116,11 +121,13 @@ public class ModelGrass : MonoBehaviour {
         grassDataBuffer.Release();
         argsBuffer.Release();
         grassVoteBuffer.Release();
+        grassScanBuffer.Release();
         wind.Release();
         grassDataBuffer = null;
         argsBuffer = null;
         wind = null;
         grassVoteBuffer = null;
+        grassScanBuffer = null;
     }
     
     private void OnDrawGizmos()
