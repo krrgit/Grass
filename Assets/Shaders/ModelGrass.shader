@@ -46,6 +46,7 @@ Shader "Custom/ModelGrass" {
             sampler2D _WindTex;
             float4 _Albedo1, _Albedo2, _AOColor, _TipColor;
             StructuredBuffer<GrassData> positionBuffer;
+            StructuredBuffer<bool> voteBuffer;
             float _Rotation, _CullingBias,_Scale, _HeightVariance, _TipColStart, _Stiffness;
             float _Saturation;
             
@@ -95,20 +96,21 @@ Shader "Custom/ModelGrass" {
                 o.vertex = UnityObjectToClipPos(worldPosition);
                 o.uv = v.uv;
                 
-                o.saturationLevel = v.uv.y + (positionBuffer[instanceID].position.w * v.uv.y) - _TipColStart - 0.25f;
-                o.saturationLevel = max(0.0f, o.saturationLevel);
-                
+                // o.saturationLevel = v.uv.y + (positionBuffer[instanceID].position.w * v.uv.y) - _TipColStart - 0.25f;
+                // o.saturationLevel = max(0.0f, o.saturationLevel);
+
+                o.saturationLevel = voteBuffer[instanceID];
                 return o;
             }
 
             fixed4 frag (v2f i) : SV_Target {
-                float4 col = lerp(_Albedo1, _Albedo2, i.uv.y);
-                float3 lightDir = _WorldSpaceLightPos0.xyz;
-                float ndotl = DotClamped(lightDir, normalize(float3(0, 1, 0)));
-                float4 ao = lerp(_AOColor, 1.0f, i.uv.y);
-                float4 tip = lerp(0.0f, _TipColor, i.saturationLevel * min(1.0, _HeightVariance));
+                // float4 col = lerp(_Albedo1, _Albedo2, i.uv.y);
+                // float3 lightDir = _WorldSpaceLightPos0.xyz;
+                // float ndotl = DotClamped(lightDir, normalize(float3(0, 1, 0)));
+                // float4 ao = lerp(_AOColor, 1.0f, i.uv.y);
+                // float4 tip = lerp(0.0f, _TipColor, i.saturationLevel * min(1.0, _HeightVariance));
 
-                return((col + tip) * ndotl * ao);// + ((col + tip) * UNITY_LIGHTMODEL_AMBIENT * (1.0 - ndotl) * ao * 0.95f));
+                return i.saturationLevel; // ((col + tip) * ndotl * ao);// + ((col + tip) * UNITY_LIGHTMODEL_AMBIENT * (1.0 - ndotl) * ao * 0.95f));
             }
 
             ENDCG
