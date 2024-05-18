@@ -5,45 +5,48 @@
 struct GrassData {
     float4 position;
     float2 uv;
+    float displacement;
 };
 
 RWStructuredBuffer<GrassData> _GrassDataBuffer;
+Texture2D<float4> _HeightMap;
+Texture2D<float4> _MusgraveTex;
+SamplerState sampler_HeightMap;
+SamplerState sampler_MusgraveTex;
 
-int _Width, _Length, _Density;
-float _XCenter;
-float _YCenter;
-float _ZCenter;
+int _Dimension, _Scale;
+float _DisplacementStrength;
 
 [numthreads(8,8,1)]
 void InitializeGrass(uint3 id : SV_DispatchThreadID) {
-    if (id.x < uint(_Width) && id.y < uint(_Length)) {
+    if (id.x < uint(_Dimension) && id.y < uint(_Dimension)) {
         GrassData grass;
-
         float4 pos = 0.0f;
-        pos.x = (id.x - float(_Width) * 0.5) * (1.0f / float(_Density));
-        pos.z = (id.y - float(_Length) * 0.5) * (1.0f / float(_Density));
+        pos.xz = (id.xy - float(_Dimension) * 0.5) * (1.0f / float(_Scale));
 
         pos.x += snoise(float3(pos.xz, 0.0f) * 3.0f) * 0.05f;
         pos.z += snoise(float3(pos.xz, 0.0f) * 4.0f) * 0.05f;
 
-        pos.y = 0.5f + _YCenter;
-        pos.x += _XCenter;
-        pos.z += _ZCenter;
-
-        float noise = abs(snoise(float3(pos.xz, 0.0f) * 0.2f));
-        pos.w = lerp(0.0f, 1.0f, noise);
-        // pos.w = max(1.0f, abs(snoise(float3(pos.xz, 0.0f) * 0.2f) * 2.5f)) * _HeightScale;
-
         float2 uv = pos.xz;
-        uv = (id.xy) * (1.0f / float(_Density));
-        uv.x /= float(_Width) * (1.0f / float(_Density));
-        uv.y /= float(_Length) * (1.0f / float(_Density));
+        uv = (id.xy) * (1.0f / float(_Scale));
+        uv.xy /= float(_Dimension) * (1.0f / float(_Scale));
         uv.y = 1 - uv.y;
         uv.x = 1 - uv.x;
 
+        float4 displacement = _HeightMap.SampleLevel(sampler_HeightMap, uv, 0);
+
+        pos.y += displacement.r * _DisplacementStrength + 0.5f;
+
+        // float noise = abs(snoise(float3(pos.xz, 0.0f) * 0.2f));
+
+        // pos.w = lerp(0.4f, 1.0f, noise);
+
+        pos.w = _MusgraveTex.SampleLevel(sampler_MusgraveTex, uv, 0).r;
+        
         grass.position = pos;
+        grass.displacement = displacement.r * _DisplacementStrength;
         grass.uv = uv;
 
-        _GrassDataBuffer[id.x + id.y * _Width] = grass;
+        _GrassDataBuffer[id.x + id.y * _Dimension] = grass;
     }
 }

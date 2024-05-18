@@ -12,9 +12,9 @@ public class ModelGrassEditor : Editor
     {
         _myScript = (ModelGrass)target;
 
-        if (_myScript.material != null) {
+        if (_myScript.grassMaterial != null) {
             // Create an instance of the default MaterialEditor
-            _materialEditor = (MaterialEditor)CreateEditor (_myScript.material);
+            _materialEditor = (MaterialEditor)CreateEditor (_myScript.grassMaterial);
         }
     }
 
@@ -24,7 +24,7 @@ public class ModelGrassEditor : Editor
         base.OnInspectorGUI();
 
         // Draw the material field of MyScript
-        EditorGUILayout.PropertyField (serializedObject.FindProperty ("material"));
+        EditorGUILayout.PropertyField (serializedObject.FindProperty ("grassMaterial"));
 
         if (EditorGUI.EndChangeCheck ()) {
             serializedObject.ApplyModifiedProperties (); 
@@ -34,9 +34,9 @@ public class ModelGrassEditor : Editor
                 DestroyImmediate (_materialEditor);
             }
 
-            if (_myScript.material != null) {
+            if (_myScript.grassMaterial != null) {
                 // Create a new instance of the default MaterialEditor
-                _materialEditor = (MaterialEditor)CreateEditor (_myScript.material);
+                _materialEditor = (MaterialEditor)CreateEditor (_myScript.grassMaterial);
 
             }
         }
@@ -48,7 +48,7 @@ public class ModelGrassEditor : Editor
             _materialEditor.DrawHeader (); 
 		
             //  We need to prevent the user to edit Unity default materials
-            bool isDefaultMaterial = !AssetDatabase.GetAssetPath (_myScript.material).StartsWith ("Assets");
+            bool isDefaultMaterial = !AssetDatabase.GetAssetPath (_myScript.grassMaterial).StartsWith ("Assets");
 
             using (new EditorGUI.DisabledGroupScope(isDefaultMaterial)) {
 
