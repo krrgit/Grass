@@ -7,7 +7,7 @@ Shader "Unlit/ModelGrass" {
         _Width("Width", Range(0.1,3.0)) = 1
         _Length("Length", Range(0.1,3.0)) = 1
         _HeightVariance("Variance Scale", Range(0.0,3.0)) = 1
-        _TipColStart("Tip Color Start", Range(0.0, 1.0)) = 0.4
+        _ShimmerIntensity("Shimmer Intensity", Range(0.0, 1.0)) = 0.4
         _SwayVariance("Sway Variance", Range(0.0,1.0)) = 0.8
         _CullingBias ("Cull Bias", Range(0.1, 1.0)) = 0.5
         _LODCutoff ("LOD Cutoff", Range(10.0, 500.0)) = 100
@@ -47,6 +47,7 @@ Shader "Unlit/ModelGrass" {
                 float2 uv : TEXCOORD0;
                 float4 _ShadowCoord: TEXCOORD1;
                 float4 worldUV : TEXCOOORD2;
+                float tipShimmer: TEXCOORD3;
             };
             
             struct GrassData {
@@ -59,7 +60,7 @@ Shader "Unlit/ModelGrass" {
             sampler2D _TerrainTex;
             float4 _Albedo1, _Albedo2, _AOColor, _TipColor;
             StructuredBuffer<GrassData> positionBuffer;
-            float _Width, _Length, _HeightVariance, _SwayVariance, _TipColStart;
+            float _Width, _Length, _HeightVariance, _SwayVariance, _ShimmerIntensity;
 
             float4 RotateAroundYInDegrees(float4 vertex, float degrees) {
                 float alpha = degrees * UNITY_PI / 180.0;
@@ -113,6 +114,8 @@ Shader "Unlit/ModelGrass" {
                 worldPosition.y *= (1.0f + variance) * _Length;
                 worldPosition.y += positionBuffer[instanceID].displacement;
 
+                o.tipShimmer = max(0.0f,tex2Dlod(_WindTex, worldUV).r);
+
                 // Set Output
                 o.pos = UnityObjectToClipPos(worldPosition);
                 o.uv = v.uv;
@@ -131,7 +134,7 @@ Shader "Unlit/ModelGrass" {
                 float ndotl = saturate(dot(lightDir, normalize(float3(0, 1, 0))));
 
                 // Color the tips
-                col = lerp(col, _TipColor, i.uv.y * i.uv.y * _TipColStart);
+                col = lerp(col, _TipColor, i.uv.y * i.uv.y * i.uv.y * i.uv.y * i.tipShimmer * _ShimmerIntensity);
                 
                 // Color the shadows
                 float attenuation = SHADOW_ATTENUATION(i);
