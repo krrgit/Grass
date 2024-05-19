@@ -17,6 +17,8 @@ SamplerState sampler_MusgraveTex;
 int _Dimension, _Scale;
 float _DisplacementStrength;
 
+float4 _TerrainCenter;
+
 [numthreads(8,8,1)]
 void InitializeGrass(uint3 id : SV_DispatchThreadID) {
     if (id.x < uint(_Dimension) && id.y < uint(_Dimension)) {
@@ -37,13 +39,13 @@ void InitializeGrass(uint3 id : SV_DispatchThreadID) {
 
         pos.y += displacement.r * _DisplacementStrength + 0.5f;
 
-        // float noise = abs(snoise(float3(pos.xz, 0.0f) * 0.2f));
+        float noise = abs(snoise(float3(pos.xz, 0.0f) * 0.2f));
+        pos.w = lerp(0.4f, 1.0f, noise);
 
-        // pos.w = lerp(0.4f, 1.0f, noise);
-
-        pos.w = _MusgraveTex.SampleLevel(sampler_MusgraveTex, uv, 0).r;
+        // pos.w = _MusgraveTex.SampleLevel(sampler_MusgraveTex, uv, 0).r;
+        pos.w = _MusgraveTex.SampleLevel(sampler_MusgraveTex, uv, 0).g;
         
-        grass.position = pos;
+        grass.position = pos + _TerrainCenter;
         grass.displacement = displacement.r * _DisplacementStrength;
         grass.uv = uv;
 

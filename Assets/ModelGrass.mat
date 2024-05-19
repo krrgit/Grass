@@ -62,7 +62,7 @@ Material:
     m_Ints: []
     m_Floats:
     - _BumpScale: 1
-    - _CullingBias: 0.1
+    - _CullingBias: 0.5
     - _Cutoff: 0.5
     - _DetailNormalMapScale: 1
     - _Droop: 0.5
@@ -70,27 +70,30 @@ Material:
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
-    - _HeightVariance: 3
+    - _Height: 0.5
+    - _HeightVariance: 1
     - _LODCutoff: 100
+    - _Length: 1
     - _Metallic: 0
     - _Mode: 0
     - _OcclusionStrength: 1
     - _Parallax: 0.02
-    - _Scale: 1
+    - _Scale: 1.26
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1
-    - _Stiffness: 0
+    - _Stiffness: 1
     - _TipColStart: 0
     - _UVSec: 0
+    - _Width: 3
     - _WindStrength: 1.5
     - _ZWrite: 1
     m_Colors:
-    - _AOColor: {r: 0.05233179, g: 0.5283019, b: 0.33290547, a: 1}
+    - _AOColor: {r: 0.015686275, g: 0.10588236, b: 0.12941177, a: 1}
     - _Albedo: {r: 0.84029955, g: 1, b: 0.740566, a: 1}
-    - _Albedo1: {r: 0.40846384, g: 0.6320754, b: 0.33690813, a: 1}
-    - _Albedo2: {r: 0.64880735, g: 0.8018868, b: 0.2988163, a: 1}
+    - _Albedo1: {r: 0.3803922, g: 0.58431375, b: 0.3137255, a: 1}
+    - _Albedo2: {r: 0.32941177, g: 0.3803922, b: 0.18823531, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
-    - _TipColor: {r: 0, g: 0, b: 0, a: 1}
+    - _TipColor: {r: 1, g: 0.9711275, b: 0.6745283, a: 1}
   m_BuildTextureStacks: []

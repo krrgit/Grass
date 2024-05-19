@@ -3,7 +3,7 @@
 #include "Simplex.compute"
 
 RWTexture2D<float4> _MusgraveTex;
-float _Scale, _Detail, _Dimension, _Lacunarity;
+float _mScale, _mDetail, _mDimension, _mLacunarity, _mBrightness, _mContrast;
 
 
 // This is directly copied from Blender (thank you open source <3)
@@ -209,5 +209,10 @@ float node_tex_musgrave_fBm_4d_float(
 
 [numthreads(8,8,1)]
 void MusgraveTexture(uint3 id : SV_DispatchThreadID) {
-    _MusgraveTex[id.xy] = max(0.0f, node_tex_musgrave_fBm_4d_float(float3(id.xy, 0.0f), 0.0f, _Scale, _Detail, _Dimension, _Lacunarity));
+    float value = node_tex_musgrave_fBm_4d_float(float3(id.xy, 0.0f), 0.0f, _mScale, _mDetail, _mDimension, _mLacunarity);
+    float a = 1.0f + _mContrast;
+    float b = _mBrightness - _mContrast * 0.5f;
+    value = clamp(0.0f, 1.0f, (a * value) + b);
+    
+    _MusgraveTex[id.xy] = value;
 }

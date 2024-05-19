@@ -376,5 +376,5 @@ float3 perlin_float3_fractal_distorted(float3 position,
 
 [numthreads(8,8,1)]
 void NoiseTexture(uint3 id : SV_DispatchThreadID) {
-    _NoiseTex[id.xy] = max(0.0f, float4(perlin_float3_fractal_distorted(float3(id.xy, 0.0f), _Detail, _Roughness, _Lacunarity, _Distortion),1.0f));
+    _NoiseTex[id.xy] = float4(perlin_float3_fractal_distorted(float3(id.xy, 0.0f), _Detail, _Roughness, _Lacunarity, _Distortion),1.0f) * 0.5f + 1.0f;
 }

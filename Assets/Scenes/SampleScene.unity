@@ -239,7 +239,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 697d5844150f9a4429a34af057b64ffe, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -0
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 697d5844150f9a4429a34af057b64ffe, type: 3}
       propertyPath: m_LocalPosition.y
@@ -593,7 +593,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   resolution: 32
-  scale: 16
+  scale: 8
   displacementStrength: 5
   grassMaterial: {fileID: 2100000, guid: 4b2d534b19470a54b8a2dad8062c0e1c, type: 2}
   grassMesh: {fileID: 7629811779324647873, guid: bce973a2c56c42046b437e28ac8b3f2b, type: 3}
@@ -602,10 +602,12 @@ MonoBehaviour:
   windSpeed: 3
   frequency: 0.5
   windStrength: 0.8
-  musgraveScale: 0.01
-  musgraveDetail: 2
-  musgraveDimension: 2
-  musgraveLacunarity: 2
+  mScale: 0.05
+  mDetail: 1.5
+  mDimension: 2
+  mLacunarity: 2
+  mBrightness: 0.2
+  mContrast: -0.303
   terrainMaterial: {fileID: 2100000, guid: 39987d2aefd02294ea79e28f8fa0117e, type: 2}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
