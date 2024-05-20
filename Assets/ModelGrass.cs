@@ -16,26 +16,12 @@ public class ModelGrass : MonoBehaviour {
     public float windSpeed = 1.0f;
     public float frequency = 1.0f;
     public float windStrength = 1.0f;
-
-    [Header("Musgrave")] 
-    [Range(0.0f,10.0f)]
-    public float mScale = 5.0f;
-    [Range(0.0f,10.0f)]
-    public float mDetail = 2;
-    [Range(0.0f,10.0f)]
-    public float mDimension = 2;
-    [Range(0.0f,10.0f)]
-    public float mLacunarity = 2;
-
-    [Range(-5.0f, 5.0f)]
-    public float mBrightness = 1;
-    [Range(-10.0f, 10.0f)]
-    public float mContrast = 0;
+    
+    [Header("Color")]
     public Material terrainMaterial;
-    [Header("Distorted Noise")]
 
 
-    private ComputeShader generateColorShader, initializeGrassShader, generateWindShader, cullGrassShader;
+    private ComputeShader initializeGrassShader, generateWindShader, cullGrassShader;
     private ComputeBuffer grassDataBuffer, grassVoteBuffer, grassScanBuffer, groupSumArrayBuffer, scannedGroupSumBuffer, culledGrassOutputBuffer, argsBuffer;
 
     private ComputeBuffer compactedGrassIndicesBuffer;
@@ -58,8 +44,7 @@ public class ModelGrass : MonoBehaviour {
 
         numGroups = numInstances / 128;
         Debug.Log("NumGroups: " + numGroups.ToString());
-        
-        generateColorShader = Resources.Load<ComputeShader>("MusgraveTexture");
+
         initializeGrassShader = Resources.Load<ComputeShader>("GrassPoint");
         generateWindShader = Resources.Load<ComputeShader>("WindNoise");
         cullGrassShader = Resources.Load<ComputeShader>("CullGrass");
@@ -105,24 +90,7 @@ public class ModelGrass : MonoBehaviour {
             Debug.Log(computedata[i]);
         }*/
     }
-
-    void GenerateMusgrave()
-    {
-        generateColorShader.SetTexture(0, "_MusgraveTex", musgrave);
-        generateColorShader.SetFloat("_mScale", mScale * 0.01f);
-        generateColorShader.SetFloat("_mDetail", mDetail);
-        generateColorShader.SetFloat("_mDimension", mDimension);
-        generateColorShader.SetFloat("_mLacunarity", mLacunarity);
-        generateColorShader.SetFloat("_mBrightness", mBrightness);
-        generateColorShader.SetFloat("_mContrast", mContrast);
-        // generateColorShader.SetVector("_Albedo1", terrainMaterial.GetColor("_Albedo1"));
-        // generateColorShader.SetVector("_Albedo2", terrainMaterial.GetColor("_Albedo2"));
-        generateColorShader.Dispatch(0, Mathf.CeilToInt(musgrave.width / 8.0f), Mathf.CeilToInt(musgrave.height / 8.0f), 1);
-        // terrainMaterial.SetTexture("_TerrainTex", musgrave);
-        
-    }
     
-
     void updateGrassBuffer() {
         initializeGrassShader.SetInt("_Dimension", resolution * scale);
         initializeGrassShader.SetInt("_Scale", scale);

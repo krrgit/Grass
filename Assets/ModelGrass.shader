@@ -1,12 +1,10 @@
 Shader "Unlit/ModelGrass" {
     Properties {
-        _Albedo1 ("Albedo 1", Color) = (1, 1, 1, 1)
-        _Albedo2 ("Albedo 2", Color) = (1, 1, 1, 1)
-        _AOColor ("Ambient Occlusion", Color) = (1, 1, 1, 1)
-        _TipColor ("Tip Color", Color) = (1, 1, 1, 1)
+        _ShimmerColor ("Shimmer Color", Color) = (1, 1, 1, 1)
+        _ShadowColor ("Shadow Color", Color) = (1, 1, 1, 1)
         _Width("Width", Range(0.1,3.0)) = 1
         _Length("Length", Range(0.1,3.0)) = 1
-        _HeightVariance("Variance Scale", Range(0.0,3.0)) = 1
+        _HeightVariance("Variance Scale", Range(0.0,5.0)) = 1
         _ShimmerIntensity("Shimmer Intensity", Range(0.0, 1.0)) = 0.4
         _SwayVariance("Sway Variance", Range(0.0,1.0)) = 0.8
         _CullingBias ("Cull Bias", Range(0.1, 1.0)) = 0.5
@@ -58,7 +56,7 @@ Shader "Unlit/ModelGrass" {
 
             sampler2D _WindTex;
             sampler2D _TerrainTex;
-            float4 _Albedo1, _Albedo2, _AOColor, _TipColor;
+            float4 _ShadowColor, _ShimmerColor;
             StructuredBuffer<GrassData> positionBuffer;
             float _Width, _Length, _HeightVariance, _SwayVariance, _ShimmerIntensity;
 
@@ -107,7 +105,7 @@ Shader "Unlit/ModelGrass" {
                 localPosition.x += movement * animationDirection.x;
                 localPosition.z += movement * animationDirection.y;
 
-                // Convert to world space
+                // Convert to world space + add height
                 float4 worldPosition = float4(grassPosition.xyz + localPosition, 1.0f);
                 float variance = positionBuffer[instanceID].position.w * _HeightVariance;
                 worldPosition.y -= positionBuffer[instanceID].displacement;
@@ -127,18 +125,18 @@ Shader "Unlit/ModelGrass" {
 
             fixed4 frag(v2f i) : SV_Target {
                 float4 col = tex2Dlod(_TerrainTex, i.worldUV);
-                col = pow(col, 1.5f);
+                // col = pow(col, 1.5f);
 
                 // Main Light
                 float3 lightDir = _WorldSpaceLightPos0.xyz;
                 float ndotl = saturate(dot(lightDir, normalize(float3(0, 1, 0))));
 
                 // Color the tips
-                col = lerp(col, _TipColor, i.uv.y * i.uv.y * i.uv.y * i.uv.y * i.tipShimmer * _ShimmerIntensity);
+                col = lerp(col, _ShimmerColor, i.uv.y * i.uv.y * i.uv.y * i.uv.y * i.tipShimmer * _ShimmerIntensity);
                 
                 // Color the shadows
                 float attenuation = SHADOW_ATTENUATION(i);
-                col = lerp(_AOColor, col, attenuation);
+                col = lerp(_ShadowColor, col, attenuation);
                 
                 return (col) * ndotl;
             }
@@ -185,9 +183,8 @@ Shader "Unlit/ModelGrass" {
             };
 
             sampler2D _WindTex;
-            float4 _Albedo1, _Albedo2, _AOColor, _TipColor;
             StructuredBuffer<GrassData> positionBuffer;
-            float _Width, _Length, _HeightVariance, _Stiffness;
+            float _Width, _Length, _HeightVariance, _SwayVariance;
 
             float4 RotateAroundYInDegrees(float4 vertex, float degrees) {
                 float alpha = degrees * UNITY_PI / 180.0;
@@ -228,15 +225,15 @@ Shader "Unlit/ModelGrass" {
                 float4 worldUV = float4(positionBuffer[instanceID].uv, 0, 0);
 
                 // Move the local position of the vertex to animate
-                float swayVariance = lerp(_Stiffness, 1.0, idHash);
+                float swayVariance = lerp(0.4f, 0.9f, idHash) * _SwayVariance;
                 float movement = v.uv.y * v.uv.y * tex2Dlod(_WindTex, worldUV).r * _Length;
                 movement *= swayVariance;
                 localPosition.x += movement * animationDirection.x;
                 localPosition.z += movement * animationDirection.y;
 
-                // Convert to world space
+                // Convert to world space + add height
                 float4 worldPosition = float4(grassPosition.xyz + localPosition, 1.0f);
-                float variance = (positionBuffer[instanceID].position.w * _HeightVariance);
+                float variance = positionBuffer[instanceID].position.w * _HeightVariance;
                 worldPosition.y -= positionBuffer[instanceID].displacement;
                 worldPosition.y *= (1.0f + variance) * _Length;
                 worldPosition.y += positionBuffer[instanceID].displacement;

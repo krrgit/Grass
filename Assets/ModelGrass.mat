@@ -71,19 +71,22 @@ Material:
     - _Glossiness: 0.5
     - _GlossyReflections: 1
     - _Height: 0.5
-    - _HeightVariance: 1
+    - _HeightVariance: 5
     - _LODCutoff: 100
-    - _Length: 1
+    - _Length: 0.3
     - _Metallic: 0
     - _Mode: 0
     - _OcclusionStrength: 1
     - _Parallax: 0.02
     - _Scale: 1.26
+    - _ShimmerIntensity: 1
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1
     - _Stiffness: 1
+    - _SwayVariance: 1
     - _TipColStart: 0
+    - _TipShimmerIntensity: 0.5
     - _UVSec: 0
     - _Width: 3
     - _WindStrength: 1.5
@@ -95,5 +98,7 @@ Material:
     - _Albedo2: {r: 0.32941177, g: 0.3803922, b: 0.18823531, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+    - _ShadowColor: {r: 0.14117648, g: 0.30980393, b: 0.3764706, a: 1}
+    - _ShimmerColor: {r: 0.8018868, g: 0.74430513, b: 0.3215112, a: 1}
     - _TipColor: {r: 1, g: 0.9711275, b: 0.6745283, a: 1}
   m_BuildTextureStacks: []

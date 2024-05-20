@@ -39,11 +39,12 @@ void InitializeGrass(uint3 id : SV_DispatchThreadID) {
 
         pos.y += displacement.r * _DisplacementStrength + 0.5f;
 
-        float noise = abs(snoise(float3(pos.xz, 0.0f) * 0.2f));
-        pos.w = lerp(0.4f, 1.0f, noise);
+        // float noise = abs(snoise(float3(pos.xz, 0.0f) * 0.2f));
+        // pos.w = lerp(0.4f, 1.0f, noise);
 
         // pos.w = _MusgraveTex.SampleLevel(sampler_MusgraveTex, uv, 0).r;
-        pos.w = _MusgraveTex.SampleLevel(sampler_MusgraveTex, uv, 0).g;
+        float4 height = _MusgraveTex.SampleLevel(sampler_MusgraveTex, uv, 0);
+        pos.w = height.g;
         
         grass.position = pos + _TerrainCenter;
         grass.displacement = displacement.r * _DisplacementStrength;
