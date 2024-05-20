@@ -191,7 +191,7 @@ Shader "Custom/Terrain" {
             float3 fp(g2f f) : SV_TARGET {
                 // float lerpValue = tex2D(_TerrainTex, f.data.uv * _TerrainTex_ST.xy).r ;
                 float3 col = tex2D(_TerrainTex, f.data.uv * _TerrainTex_ST.xy).rgb;
-                // col = pow(col, 1.5f);
+                col = pow(col, 1.5f);
                 // float3 col = lerp(_Albedo1, _Albedo2, lerpValue);
                 
                 float3 normal;

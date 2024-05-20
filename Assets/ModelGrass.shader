@@ -125,7 +125,7 @@ Shader "Unlit/ModelGrass" {
 
             fixed4 frag(v2f i) : SV_Target {
                 float4 col = tex2Dlod(_TerrainTex, i.worldUV);
-                // col = pow(col, 1.5f);
+
 
                 // Main Light
                 float3 lightDir = _WorldSpaceLightPos0.xyz;
@@ -137,6 +137,8 @@ Shader "Unlit/ModelGrass" {
                 // Color the shadows
                 float attenuation = SHADOW_ATTENUATION(i);
                 col = lerp(_ShadowColor, col, attenuation);
+
+                col = pow(col, 1.5f);
                 
                 return (col) * ndotl;
             }

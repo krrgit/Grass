@@ -71,8 +71,9 @@ public class ModelGrass : MonoBehaviour {
         wind = new RenderTexture(256, 256, 0, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear);
         wind.enableRandomWrite = true;
         wind.Create();
-        
-        musgrave = new RenderTexture(256, 256, 0, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear);
+
+        Texture terrainTex = terrainMaterial.GetTexture("_TerrainTex");
+        musgrave = new RenderTexture(terrainTex.width, terrainTex.height, 0, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear);
         musgrave.enableRandomWrite = true;
         musgrave.Create();
 
