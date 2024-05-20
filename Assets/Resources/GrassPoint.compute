@@ -45,7 +45,7 @@ void InitializeGrass(uint3 id : SV_DispatchThreadID) {
         // pos.w = _MusgraveTex.SampleLevel(sampler_MusgraveTex, uv, 0).r;
         float4 height = _MusgraveTex.SampleLevel(sampler_MusgraveTex, uv, 0);
         pos.w = max(height.g,max(height.r, height.b));
-        pos.w = pow(pos.w, 1/pos.w);
+        pos.w = pow(pos.w, 2/pos.w);
         
         grass.position = pos + _TerrainCenter;
         grass.displacement = displacement.r * _DisplacementStrength;

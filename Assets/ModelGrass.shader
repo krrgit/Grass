@@ -7,8 +7,10 @@ Shader "Unlit/ModelGrass" {
         _HeightVariance("Variance Scale", Range(0.0,5.0)) = 1
         _ShimmerIntensity("Shimmer Intensity", Range(0.0, 1.0)) = 0.4
         _SwayVariance("Sway Variance", Range(0.0,1.0)) = 0.8
+        _Deformation ("Deformation", Range(0.0, 1.0)) = 0.0
         _CullingBias ("Cull Bias", Range(0.1, 1.0)) = 0.5
         _LODCutoff ("LOD Cutoff", Range(10.0, 500.0)) = 100
+        _HeatMap("Heatmap", 2D) = "white" {}
     }
 
     SubShader {
@@ -46,6 +48,7 @@ Shader "Unlit/ModelGrass" {
                 float4 _ShadowCoord: TEXCOORD1;
                 float4 worldUV : TEXCOOORD2;
                 float tipShimmer: TEXCOORD3;
+                float windStrength: TEXCOORD4;
             };
             
             struct GrassData {
@@ -55,10 +58,12 @@ Shader "Unlit/ModelGrass" {
             };
 
             sampler2D _WindTex;
+            sampler2D _DeformTex;
             sampler2D _TerrainTex;
+            sampler2D _HeatMap;
             float4 _ShadowColor, _ShimmerColor;
             StructuredBuffer<GrassData> positionBuffer;
-            float _Width, _Length, _HeightVariance, _SwayVariance, _ShimmerIntensity;
+            float _Width, _Length, _HeightVariance, _SwayVariance, _ShimmerIntensity, _Deformation;
 
             float4 RotateAroundYInDegrees(float4 vertex, float degrees) {
                 float alpha = degrees * UNITY_PI / 180.0;
@@ -90,6 +95,9 @@ Shader "Unlit/ModelGrass" {
                 float4 animationDirection = float4(0.0f, 0.0f, 1.0f, 0.0f);
                 animationDirection = normalize(RotateAroundYInDegrees(animationDirection, idHash * 180.0f));
 
+                float4 facingDirection = float4(0.0f, 0.0f, 1.0f, 0.0f);
+                // facingDirection = normalize(RotateAroundYInDegrees(animationDirection, idHash * 90.0f));
+
                 // Rotate the vertex locally
                 float4 localPosition = RotateAroundXInDegrees(v.vertex, 90.0f);
                 localPosition = RotateAroundYInDegrees(localPosition, idHash * 90.0f);
@@ -100,16 +108,29 @@ Shader "Unlit/ModelGrass" {
 
                 // Move the local position of the vertex to animate
                 float swayVariance = lerp(0.4f, 0.9f, idHash) * _SwayVariance;
-                float movement = v.uv.y * v.uv.y * tex2Dlod(_WindTex, worldUV).r * _Length;
-                movement *= swayVariance;
+                float windStrength = tex2Dlod(_WindTex, worldUV).r;
+                float movement = v.uv.y * v.uv.y * windStrength * _Length;
+                movement *= swayVariance * (1.0f - _Deformation);
                 localPosition.x += movement * animationDirection.x;
                 localPosition.z += movement * animationDirection.y;
 
+                // Height variance
+                float variance = positionBuffer[instanceID].position.w * _HeightVariance;
+                
                 // Convert to world space + add height
                 float4 worldPosition = float4(grassPosition.xyz + localPosition, 1.0f);
-                float variance = positionBuffer[instanceID].position.w * _HeightVariance;
                 worldPosition.y -= positionBuffer[instanceID].displacement;
                 worldPosition.y *= (1.0f + variance) * _Length;
+                worldPosition.y += positionBuffer[instanceID].displacement;
+
+                // Deformation
+                float4 deform_values = tex2Dlod(_DeformTex, worldUV);
+                float4 deformDirection = deform_values;
+                deformDirection.w = 0;
+                float deformAmount = deform_values.w * v.uv.y;
+                worldPosition += _Deformation * deformDirection * deformAmount;
+                worldPosition.y -= positionBuffer[instanceID].displacement;
+                worldPosition.y -= (variance) * _Length * _Deformation * deformAmount;
                 worldPosition.y += positionBuffer[instanceID].displacement;
 
                 o.tipShimmer = max(0.0f,tex2Dlod(_WindTex, worldUV).r);
@@ -118,12 +139,15 @@ Shader "Unlit/ModelGrass" {
                 o.pos = UnityObjectToClipPos(worldPosition);
                 o.uv = v.uv;
 
+                o.windStrength = windStrength;
                 o.worldUV = worldUV;
                 o._ShadowCoord = ComputeScreenPos(o.pos);
                 return o;
             }
 
             fixed4 frag(v2f i) : SV_Target {
+                // return tex2D(_DeformTex, i.worldUV);
+                float deform = (tex2D(_DeformTex, i.worldUV).w * 0.4f);
                 float4 col = tex2Dlod(_TerrainTex, i.worldUV);
 
 
@@ -132,11 +156,11 @@ Shader "Unlit/ModelGrass" {
                 float ndotl = saturate(dot(lightDir, normalize(float3(0, 1, 0))));
 
                 // Color the tips
-                col = lerp(col, _ShimmerColor, i.uv.y * i.uv.y * i.uv.y * i.uv.y * i.tipShimmer * _ShimmerIntensity);
+                col = lerp(col, _ShimmerColor, i.uv.y * i.uv.y * i.uv.y * i.uv.y * i.tipShimmer * _ShimmerIntensity * (1.0f - _Deformation));
                 
                 // Color the shadows
                 float attenuation = SHADOW_ATTENUATION(i);
-                col = lerp(_ShadowColor, col, attenuation);
+                col = lerp(_ShadowColor, col, attenuation - deform);
 
                 col = pow(col, 1.5f);
                 

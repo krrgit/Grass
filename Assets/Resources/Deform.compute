@@ -1,0 +1,29 @@
+#pragma kernel Deform
+
+#include "Simplex.compute"
+
+RWTexture2D<float4> _DeformMap;
+
+float2 _UVPosition;
+float _Radius, _HealSpeed;
+float _Dimension;
+
+[numthreads(8,8,1)]
+void Deform(uint3 id : SV_DispatchThreadID) {
+    float4 result = _DeformMap[id.xy];
+
+    float2 uv = id.xy / _Dimension;
+    float dist = distance(_UVPosition, uv);
+    if (dist < _Radius)
+    {
+        float deform = 1.0f - dist/_Radius;
+        if (result.w < 0.5f) result.xz = normalize(_UVPosition - uv);
+        result.w =  max(result.w, deform);
+    } else
+    {
+        result.w -= _HealSpeed;
+        result.w = max(0.0f, result.w);
+    }
+
+    _DeformMap[id.xy] = result;
+}

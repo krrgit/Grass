@@ -17,20 +17,27 @@ public class ModelGrass : MonoBehaviour {
     public float frequency = 1.0f;
     public float windStrength = 1.0f;
     
-    [Header("Color")]
+    [Header("Terrain")]
     public Material terrainMaterial;
 
-
+    [Header("Deformation")] 
+    public float deformRadius = 0.5f;
+    public float deformHealSpeed = 0.01f;
+    public float moveSpeed = 0.1f;
+    public Vector2 brush;
+    
     private ComputeShader initializeGrassShader, generateWindShader, cullGrassShader;
+    private ComputeShader deformShader;
     private ComputeBuffer grassDataBuffer, grassVoteBuffer, grassScanBuffer, groupSumArrayBuffer, scannedGroupSumBuffer, culledGrassOutputBuffer, argsBuffer;
 
     private ComputeBuffer compactedGrassIndicesBuffer;
 
     private RenderTexture wind;
     private RenderTexture musgrave;
+    private RenderTexture deformTexture;
     
     private int numInstances, numGroups;
-
+    
     private struct GrassData {
         public Vector4 position;
         public Vector2 uv;
@@ -47,6 +54,7 @@ public class ModelGrass : MonoBehaviour {
 
         initializeGrassShader = Resources.Load<ComputeShader>("GrassPoint");
         generateWindShader = Resources.Load<ComputeShader>("WindNoise");
+        deformShader = Resources.Load<ComputeShader>("Deform");
         cullGrassShader = Resources.Load<ComputeShader>("CullGrass");
         
         argsBuffer = new ComputeBuffer(1, 5 * sizeof(uint), ComputeBufferType.IndirectArguments);
@@ -76,11 +84,11 @@ public class ModelGrass : MonoBehaviour {
         musgrave = new RenderTexture(terrainTex.width, terrainTex.height, 0, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear);
         musgrave.enableRandomWrite = true;
         musgrave.Create();
-
-        // terrainMaterial.SetTexture("_TerrainTex", musgrave);
         Graphics.Blit(terrainMaterial.GetTexture("_TerrainTex"), musgrave);
-
-        // GenerateMusgrave();
+        
+        deformTexture = new RenderTexture(256, 256, 0, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear);
+        deformTexture.enableRandomWrite = true;
+        deformTexture.Create();
 
         updateGrassBuffer();
         /*
@@ -155,13 +163,26 @@ public class ModelGrass : MonoBehaviour {
         generateWindShader.SetFloat("_Amplitude", windStrength);
         generateWindShader.Dispatch(0, Mathf.CeilToInt(wind.width / 8.0f), Mathf.CeilToInt(wind.height / 8.0f), 1);
     }
+
+
+    void UpdateDeform()
+    {
+        brush = (new Vector2(Mathf.Sin(Time.time * moveSpeed), Mathf.Cos(Time.time* moveSpeed)) * 0.25f) + Vector2.one * 0.5f;
+        
+        deformShader.SetTexture(0, "_DeformMap", deformTexture);
+        deformShader.SetFloat("_Radius", deformRadius);
+        deformShader.SetVector("_UVPosition", brush);
+        deformShader.SetFloat("_HealSpeed", deformHealSpeed);
+        deformShader.SetFloat("_Dimension", 256);
+        deformShader.Dispatch(0, Mathf.CeilToInt(deformTexture.width / 8.0f), Mathf.CeilToInt(deformTexture.height / 8.0f), 1);
+    }
     
 
     void Update() {      
         CullGrass();
         GenerateWind();
         //GenerateMusgrave();
-
+        UpdateDeform();
         updateGrassBuffer();
         
         
@@ -169,6 +190,7 @@ public class ModelGrass : MonoBehaviour {
         grassMaterial.SetBuffer("voteBuffer", grassVoteBuffer);
         grassMaterial.SetFloat("_DisplacementStrength", displacementStrength);
         grassMaterial.SetTexture("_WindTex", wind);
+        grassMaterial.SetTexture("_DeformTex", deformTexture);
         grassMaterial.SetTexture("_ColorTex", musgrave);
         // terrainMaterial.SetTexture("_TerrainTex", musgrave);
 
