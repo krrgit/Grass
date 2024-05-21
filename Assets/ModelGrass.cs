@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -42,6 +43,13 @@ public class ModelGrass : MonoBehaviour {
         public Vector4 position;
         public Vector2 uv;
         public float displacement;
+    }
+    
+    [Serializable]
+    public struct GrassDeformerData
+    {
+        public Vector3 uvPosition;
+        public float radius;
     }
 
     void OnEnable() {
@@ -167,12 +175,36 @@ public class ModelGrass : MonoBehaviour {
 
     void UpdateDeform()
     {
-        brush = (new Vector2(Mathf.Sin(Time.time * moveSpeed), Mathf.Cos(Time.time* moveSpeed)) * 0.25f) + Vector2.one * 0.5f;
+        // brush = (new Vector2(Mathf.Sin(Time.time * moveSpeed), Mathf.Cos(Time.time* moveSpeed)) * 0.25f) + Vector2.one * 0.5f;
         
         deformShader.SetTexture(0, "_DeformMap", deformTexture);
         deformShader.SetFloat("_Radius", deformRadius);
         deformShader.SetVector("_UVPosition", brush);
         deformShader.SetFloat("_HealSpeed", deformHealSpeed);
+        deformShader.SetFloat("_Dimension", 256);
+        deformShader.Dispatch(0, Mathf.CeilToInt(deformTexture.width / 8.0f), Mathf.CeilToInt(deformTexture.height / 8.0f), 1);
+    }
+
+    private void HealDeform()
+    {
+        // brush = (new Vector2(Mathf.Sin(Time.time * moveSpeed), Mathf.Cos(Time.time* moveSpeed)) * 0.25f) + Vector2.one * 0.5f;
+        
+        deformShader.SetTexture(1, "_DeformMap", deformTexture);
+        deformShader.SetFloat("_HealSpeed", deformHealSpeed);
+        deformShader.Dispatch(1, Mathf.CeilToInt(deformTexture.width / 8.0f), Mathf.CeilToInt(deformTexture.height / 8.0f), 1);
+    }
+    
+    
+
+    public void Deform(GrassDeformerData deformer)
+    {
+        // Vector4 uvPosition = (deformer.worldPosition - transform.position) / resolution;
+
+        // brush = (new Vector2(Mathf.Sin(Time.time * moveSpeed), Mathf.Cos(Time.time* moveSpeed)) * 0.25f) + Vector2.one * 0.5f;
+        
+        deformShader.SetTexture(0, "_DeformMap", deformTexture);
+        deformShader.SetFloat("_Radius", deformer.radius / resolution);
+        deformShader.SetVector("_UVPosition", deformer.uvPosition);
         deformShader.SetFloat("_Dimension", 256);
         deformShader.Dispatch(0, Mathf.CeilToInt(deformTexture.width / 8.0f), Mathf.CeilToInt(deformTexture.height / 8.0f), 1);
     }
@@ -182,7 +214,8 @@ public class ModelGrass : MonoBehaviour {
         CullGrass();
         GenerateWind();
         //GenerateMusgrave();
-        UpdateDeform();
+        // UpdateDeform();
+        HealDeform();
         updateGrassBuffer();
         
         

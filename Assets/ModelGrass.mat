@@ -80,7 +80,7 @@ Material:
     - _Glossiness: 0.5
     - _GlossyReflections: 1
     - _Height: 0.5
-    - _HeightVariance: 5
+    - _HeightVariance: 1
     - _LODCutoff: 100
     - _Length: 1
     - _Metallic: 0

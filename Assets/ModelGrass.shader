@@ -95,9 +95,6 @@ Shader "Unlit/ModelGrass" {
                 float4 animationDirection = float4(0.0f, 0.0f, 1.0f, 0.0f);
                 animationDirection = normalize(RotateAroundYInDegrees(animationDirection, idHash * 180.0f));
 
-                float4 facingDirection = float4(0.0f, 0.0f, 1.0f, 0.0f);
-                // facingDirection = normalize(RotateAroundYInDegrees(animationDirection, idHash * 90.0f));
-
                 // Rotate the vertex locally
                 float4 localPosition = RotateAroundXInDegrees(v.vertex, 90.0f);
                 localPosition = RotateAroundYInDegrees(localPosition, idHash * 90.0f);
@@ -127,12 +124,13 @@ Shader "Unlit/ModelGrass" {
                 float4 deform_values = tex2Dlod(_DeformTex, worldUV);
                 float4 deformDirection = deform_values;
                 deformDirection.w = 0;
-                float deformAmount = deform_values.w * v.uv.y;
-                worldPosition += _Deformation * deformDirection * deformAmount;
+                float deformAmount = deform_values.w * v.uv.y * _Deformation;
+                worldPosition +=  deformDirection * deformAmount * (1.0f + variance) * _Length;
                 worldPosition.y -= positionBuffer[instanceID].displacement;
-                worldPosition.y -= (variance) * _Length * _Deformation * deformAmount;
+                worldPosition.y -= min(0.5f, variance * _Length * deformAmount);
                 worldPosition.y += positionBuffer[instanceID].displacement;
 
+                // Get Shimmer amount
                 o.tipShimmer = max(0.0f,tex2Dlod(_WindTex, worldUV).r);
 
                 // Set Output
@@ -209,8 +207,9 @@ Shader "Unlit/ModelGrass" {
             };
 
             sampler2D _WindTex;
+            sampler2D _DeformTex;
             StructuredBuffer<GrassData> positionBuffer;
-            float _Width, _Length, _HeightVariance, _SwayVariance;
+            float _Width, _Length, _HeightVariance, _SwayVariance, _Deformation;
 
             float4 RotateAroundYInDegrees(float4 vertex, float degrees) {
                 float alpha = degrees * UNITY_PI / 180.0;
@@ -229,8 +228,8 @@ Shader "Unlit/ModelGrass" {
             }
 
             v2f vert(VertexData v, uint instanceID : SV_INSTANCEID) {
-                v2f o;
-                                
+               v2f o;
+                
                 // Get Position from StructuredBuffer
                 float4 grassPosition = positionBuffer[instanceID].position;
 
@@ -252,22 +251,34 @@ Shader "Unlit/ModelGrass" {
 
                 // Move the local position of the vertex to animate
                 float swayVariance = lerp(0.4f, 0.9f, idHash) * _SwayVariance;
-                float movement = v.uv.y * v.uv.y * tex2Dlod(_WindTex, worldUV).r * _Length;
-                movement *= swayVariance;
+                float windStrength = tex2Dlod(_WindTex, worldUV).r;
+                float movement = v.uv.y * v.uv.y * windStrength * _Length;
+                movement *= swayVariance * (1.0f - _Deformation);
                 localPosition.x += movement * animationDirection.x;
                 localPosition.z += movement * animationDirection.y;
 
+                // Height variance
+                float variance = positionBuffer[instanceID].position.w * _HeightVariance;
+                
                 // Convert to world space + add height
                 float4 worldPosition = float4(grassPosition.xyz + localPosition, 1.0f);
-                float variance = positionBuffer[instanceID].position.w * _HeightVariance;
                 worldPosition.y -= positionBuffer[instanceID].displacement;
                 worldPosition.y *= (1.0f + variance) * _Length;
+                worldPosition.y += positionBuffer[instanceID].displacement;
+
+                // Deformation
+                float4 deform_values = tex2Dlod(_DeformTex, worldUV);
+                float4 deformDirection = deform_values;
+                deformDirection.w = 0;
+                float deformAmount = deform_values.w * v.uv.y * _Deformation;
+                worldPosition +=  deformDirection * deformAmount * (1.0f + variance) * _Length;
+                worldPosition.y -= positionBuffer[instanceID].displacement;
+                worldPosition.y -= min(0.5f, variance * _Length * deformAmount);
                 worldPosition.y += positionBuffer[instanceID].displacement;
 
                 // Set Output
                 o.pos = UnityObjectToClipPos(worldPosition);
                 o.uv = v.uv;
-                
                 return o;
             }
 
